@@ -17,6 +17,7 @@ const authEyebrow = document.querySelector('#auth-eyebrow');
 const authSwitchCopy = document.querySelector('#auth-switch-copy');
 const authModeToggle = document.querySelector('#auth-mode-toggle');
 let toastTimer;
+let editingPostId = null;
 
 function getAuth() {
   try {
@@ -156,8 +157,47 @@ function makePost(post, index) {
   title.addEventListener('click', () => readButton.click());
   body.append(readButton);
 
-  article.append(body);
-  article.append(element('span', 'post-author', readingTime(content)));
+  const side = element('div', 'post-side');
+  side.append(element('span', 'post-author', readingTime(content)));
+
+  const auth = getAuth();
+  const isAdmin = auth?.user?.role === 'admin';
+  const isOwner = String(post.user_id) === String(auth?.user?.id);
+  if (isAdmin || isOwner) {
+    const actions = element('div', 'post-actions');
+    const editButton = element('button', 'post-action', 'Edit');
+    editButton.type = 'button';
+    editButton.addEventListener('click', () => {
+      editingPostId = String(post.id);
+      document.querySelector('#composer-title').textContent = 'Edit story';
+      postForm.querySelector('[type="submit"]').innerHTML = 'Save changes <span aria-hidden="true">↗</span>';
+      postForm.elements.title.value = post.title;
+      postForm.elements.content.value = post.content;
+      composer.hidden = false;
+      composer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.querySelector('#post-title').focus({ preventScroll: true });
+    });
+    actions.append(editButton);
+
+    if (isAdmin) {
+      const deleteButton = element('button', 'post-action post-action-danger', 'Delete');
+      deleteButton.type = 'button';
+      deleteButton.addEventListener('click', async () => {
+        if (!window.confirm(`Delete "${post.title}"? This cannot be undone.`)) return;
+        try {
+          await apiRequest(`/api/posts/${encodeURIComponent(post.id)}`, { method: 'DELETE' });
+          showToast('The story was deleted.');
+          await loadPosts();
+        } catch (error) {
+          showToast(error.message);
+        }
+      });
+      actions.append(deleteButton);
+    }
+    side.append(actions);
+  }
+
+  article.append(body, side);
   return article;
 }
 
@@ -236,6 +276,7 @@ loginForm.addEventListener('submit', async (event) => {
     });
     authDialog.close();
     showToast(`Welcome back, ${getAuth().user.username}.`);
+    await loadPosts();
   } catch (error) {
     setFormMessage('#login-message', error.message);
   }
@@ -268,15 +309,25 @@ logoutButton.addEventListener('click', async () => {
   }
   clearAuth();
   showToast('You have signed out.');
+  await loadPosts();
 });
 
 writeOpen.addEventListener('click', () => {
+  editingPostId = null;
+  postForm.reset();
+  document.querySelector('#composer-title').textContent = 'A new story';
+  postForm.querySelector('[type="submit"]').innerHTML = 'Publish story <span aria-hidden="true">↗</span>';
+  setFormMessage('#post-message', '');
   composer.hidden = false;
   composer.scrollIntoView({ behavior: 'smooth', block: 'start' });
   document.querySelector('#post-title').focus({ preventScroll: true });
 });
 
 document.querySelector('#write-close').addEventListener('click', () => {
+  editingPostId = null;
+  postForm.reset();
+  document.querySelector('#composer-title').textContent = 'A new story';
+  postForm.querySelector('[type="submit"]').innerHTML = 'Publish story <span aria-hidden="true">↗</span>';
   composer.hidden = true;
   setFormMessage('#post-message', '');
 });
@@ -285,15 +336,19 @@ postForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   setFormMessage('#post-message', '');
   const formData = new FormData(postForm);
+  const updatingPost = Boolean(editingPostId);
   try {
-    await apiRequest('/api/posts', {
-      method: 'POST',
+    await apiRequest(updatingPost ? `/api/posts/${encodeURIComponent(editingPostId)}` : '/api/posts', {
+      method: updatingPost ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title: formData.get('title'), content: formData.get('content') })
     });
+    editingPostId = null;
     postForm.reset();
     composer.hidden = true;
-    showToast('Your story is published.');
+    document.querySelector('#composer-title').textContent = 'A new story';
+    postForm.querySelector('[type="submit"]').innerHTML = 'Publish story <span aria-hidden="true">↗</span>';
+    showToast(updatingPost ? 'Your changes are saved.' : 'Your story is published.');
     await loadPosts();
   } catch (error) {
     setFormMessage('#post-message', error.message);

@@ -19,7 +19,7 @@ npm run auth
 npm run blog
 ```
 
-Open `http://localhost:5000` to read posts, create a reader or author account, sign in, and publish as an author. The browser stores the login tokens in localStorage and refreshes expired access tokens automatically.
+Open `http://localhost:5000` to read posts, create an account, and sign in. Authors can publish and edit their own posts; admins can publish, edit any post, and delete posts. The browser stores the login tokens in localStorage and refreshes expired access tokens automatically.
 
 ## Run the API checks in Postman
 
