@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Zach's Blog: notes, stories, and ideas worth sharing." />
+  <title>Zach's Blog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="topline"><div class="shell"><span>PERSONAL JOURNAL &nbsp;·&nbsp; EST. 2026</span><span id="today-label"></span></div></div>
+  <header class="site-header">
+    <div class="shell header-row">
+      <a class="brand" href="#top" aria-label="Zach's Blog home">ZACH'S <span>BLOG</span></a>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="#posts">Stories</a>
+        <a href="#about">About</a>
+      </nav>
+      <div class="header-actions">
+        <button class="button button-quiet" id="login-open" type="button">Sign in</button>
+        <button class="button button-dark" id="write-open" type="button" hidden>Write a post <span aria-hidden="true">+</span></button>
+        <button class="button button-quiet" id="logout-button" type="button" hidden>Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="intro shell">
+      <div class="intro-copy">
+        <p class="eyebrow"><span class="eyebrow-mark"></span> A place for the things on my mind</p>
+        <h1>Ideas, stories<br />and the occasional <em>rabbit hole.</em></h1>
+        <p class="intro-text">Welcome to my corner of the internet. Pull up a chair and have a read.</p>
+      </div>
+      <div class="intro-index" aria-hidden="true"><span>THE JOURNAL</span><strong>01</strong><span>READ AT YOUR OWN PACE</span></div>
+    </section>
+
+    <section class="posts-section shell" id="posts" aria-labelledby="posts-heading">
+      <div class="section-heading">
+        <div><p class="eyebrow">Fresh from the page</p><h2 id="posts-heading">Latest stories</h2></div>
+        <p class="post-count" id="post-count">Loading stories...</p>
+      </div>
+
+      <section class="composer" id="composer" aria-labelledby="composer-title" hidden>
+        <div class="composer-heading"><h3 id="composer-title">A new story</h3><button class="icon-button" id="write-close" type="button" aria-label="Close editor">×</button></div>
+        <form id="post-form">
+          <label for="post-title">Title</label>
+          <input id="post-title" name="title" maxlength="140" required placeholder="Give your story a title" />
+          <label for="post-content">Your story</label>
+          <textarea id="post-content" name="content" rows="7" required placeholder="Start writing..."></textarea>
+          <div class="form-footer"><p class="form-message" id="post-message" role="status"></p><button class="button button-dark" type="submit">Publish story <span aria-hidden="true">↗</span></button></div>
+        </form>
+      </section>
+
+      <div class="feed" id="feed" aria-live="polite">
+        <div class="loading-row"><span class="loading-dot"></span>Finding the latest stories...</div>
+      </div>
+    </section>
+
+    <section class="about-band" id="about">
+      <div class="shell about-inner">
+        <div><p class="eyebrow">A little about this place</p><h2>Just me, sharing<br />what I find interesting.</h2></div>
+        <p>This is Zach's Blog: a home for ideas, notes, and stories. Thanks for stopping by. Come back whenever you like; there's always more to read.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer"><div class="shell footer-row"><a class="footer-brand" href="#top">ZACH'S BLOG</a><span>Made with curiosity. © 2026</span><a href="#top">Back to top ↑</a></div></footer>
+
+  <dialog class="auth-dialog" id="auth-dialog" aria-labelledby="auth-title">
+    <div class="dialog-top"><span class="brand small-brand">ZACH'S <span>BLOG</span></span><button class="icon-button" id="auth-close" type="button" aria-label="Close sign in">×</button></div>
+    <p class="eyebrow" id="auth-eyebrow">Good to have you back</p>
+    <h2 id="auth-title">Sign in</h2>
+    <form id="login-form">
+      <label for="login-username">Username</label><input id="login-username" name="username" autocomplete="username" required />
+      <label for="login-password">Password</label><input id="login-password" name="password" type="password" autocomplete="current-password" required />
+      <p class="form-message" id="login-message" role="status"></p>
+      <button class="button button-dark full-button" type="submit">Sign in <span aria-hidden="true">↗</span></button>
+    </form>
+    <form id="register-form" hidden>
+      <label for="register-username">Username</label><input id="register-username" name="username" autocomplete="username" required />
+      <label for="register-password">Password</label><input id="register-password" name="password" type="password" autocomplete="new-password" minlength="6" required />
+      <label for="register-role">Account type</label>
+      <select id="register-role" name="role"><option value="reader">Reader</option><option value="author">Author</option></select>
+      <p class="form-message" id="register-message" role="status"></p>
+      <button class="button button-dark full-button" type="submit">Create account <span aria-hidden="true">↗</span></button>
+    </form>
+    <p class="auth-switch"><span id="auth-switch-copy">New here?</span> <button class="text-button" id="auth-mode-toggle" type="button">Create an account</button></p>
+  </dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "blog-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Two-server Express blog API with JWT authentication",
+  "main": "auth-server/server.js",
+  "scripts": {
+    "auth": "node auth-server/server.js",
+    "blog": "node blog-api/server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "node-localstorage": "^3.0.5"
+  }
+}
