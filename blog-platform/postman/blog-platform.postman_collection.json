@@ -1,0 +1,193 @@
+{
+  "info": {
+    "name": "Zach's Blog Platform API",
+    "description": "End-to-end requests for the two-server blog project. Run in order with the collection runner. Test users are generated uniquely for each run.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "authUrl", "value": "http://localhost:4000" },
+    { "key": "blogUrl", "value": "http://localhost:5000" },
+    { "key": "password", "value": "PostmanTest123!" },
+    { "key": "authorName", "value": "" },
+    { "key": "readerName", "value": "" },
+    { "key": "adminName", "value": "" },
+    { "key": "authorToken", "value": "" },
+    { "key": "readerToken", "value": "" },
+    { "key": "adminToken", "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "readerRefreshToken", "value": "" },
+    { "key": "adminRefreshToken", "value": "" },
+    { "key": "postId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Register author",
+      "event": [
+        { "listen": "prerequest", "script": { "type": "text/javascript", "exec": ["pm.collectionVariables.set('authorName', 'postman-author-' + Date.now());"] } },
+        { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Author registered', function () { pm.response.to.have.status(201); });"] } }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{authorName}}\",\n  \"password\": \"{{password}}\",\n  \"role\": \"author\"\n}", "options": { "raw": { "language": "json" } } },
+        "url": "{{authUrl}}/register"
+      }
+    },
+    {
+      "name": "2. Login author",
+      "event": [
+        { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Author login succeeds', function () { pm.response.to.have.status(200); });", "const loginTokens = pm.response.json();", "pm.collectionVariables.set('authorToken', loginTokens.accessToken);", "pm.collectionVariables.set('refreshToken', loginTokens.refreshToken);"] } }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{authorName}}\",\n  \"password\": \"{{password}}\"\n}", "options": { "raw": { "language": "json" } } },
+        "url": "{{authUrl}}/login"
+      }
+    },
+    {
+      "name": "3. List public posts",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Public list succeeds', function () { pm.response.to.have.status(200); });", "pm.test('Response is a post list', function () { pm.expect(pm.response.json()).to.be.an('array'); });"] } }],
+      "request": { "method": "GET", "url": "{{blogUrl}}/api/posts" }
+    },
+    {
+      "name": "4. Create post as author",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Author can create a post', function () { pm.response.to.have.status(201); });", "pm.collectionVariables.set('postId', pm.response.json().id);"] } }],
+      "request": {
+        "method": "POST",
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{authorToken}}", "type": "string" }] },
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"title\": \"Postman test story\",\n  \"content\": \"A temporary post created by the Postman collection.\"\n}", "options": { "raw": { "language": "json" } } },
+        "url": "{{blogUrl}}/api/posts"
+      }
+    },
+    {
+      "name": "5. List author's posts",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Author can list own posts', function () { pm.response.to.have.status(200); });", "pm.test('Created post is in own list', function () { pm.expect(pm.response.json().some(function (post) { return String(post.id) === String(pm.collectionVariables.get('postId')); })).to.equal(true); });"] } }],
+      "request": { "method": "GET", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{authorToken}}", "type": "string" }] }, "url": "{{blogUrl}}/api/me/posts" }
+    },
+    {
+      "name": "6. Update own post",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Owner can update post', function () { pm.response.to.have.status(200); });"] } }],
+      "request": {
+        "method": "PUT",
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{authorToken}}", "type": "string" }] },
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"title\": \"Updated by Postman\"\n}", "options": { "raw": { "language": "json" } } },
+        "url": "{{blogUrl}}/api/posts/{{postId}}"
+      }
+    },
+    {
+      "name": "7. Register reader",
+      "event": [
+        { "listen": "prerequest", "script": { "type": "text/javascript", "exec": ["pm.collectionVariables.set('readerName', 'postman-reader-' + Date.now());"] } },
+        { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Reader registered', function () { pm.response.to.have.status(201); });"] } }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{readerName}}\",\n  \"password\": \"{{password}}\",\n  \"role\": \"reader\"\n}", "options": { "raw": { "language": "json" } } },
+        "url": "{{authUrl}}/register"
+      }
+    },
+    {
+      "name": "8. Login reader",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Reader login succeeds', function () { pm.response.to.have.status(200); });", "const readerTokens = pm.response.json();", "pm.collectionVariables.set('readerToken', readerTokens.accessToken);", "pm.collectionVariables.set('readerRefreshToken', readerTokens.refreshToken);"] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{readerName}}\",\n  \"password\": \"{{password}}\"\n}", "options": { "raw": { "language": "json" } } },
+        "url": "{{authUrl}}/login"
+      }
+    },
+    {
+      "name": "9. Reader cannot create post",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Reader is forbidden from creating posts', function () { pm.response.to.have.status(403); });"] } }],
+      "request": {
+        "method": "POST",
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{readerToken}}", "type": "string" }] },
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"title\": \"Reader test\",\n  \"content\": \"This should be forbidden.\"\n}", "options": { "raw": { "language": "json" } } },
+        "url": "{{blogUrl}}/api/posts"
+      }
+    },
+    {
+      "name": "10. Register admin",
+      "event": [
+        { "listen": "prerequest", "script": { "type": "text/javascript", "exec": ["pm.collectionVariables.set('adminName', 'postman-admin-' + Date.now());"] } },
+        { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Admin registered', function () { pm.response.to.have.status(201); });"] } }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{adminName}}\",\n  \"password\": \"{{password}}\",\n  \"role\": \"admin\"\n}", "options": { "raw": { "language": "json" } } },
+        "url": "{{authUrl}}/register"
+      }
+    },
+    {
+      "name": "11. Login admin",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Admin login succeeds', function () { pm.response.to.have.status(200); });", "const adminTokens = pm.response.json();", "pm.collectionVariables.set('adminToken', adminTokens.accessToken);", "pm.collectionVariables.set('adminRefreshToken', adminTokens.refreshToken);"] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{adminName}}\",\n  \"password\": \"{{password}}\"\n}", "options": { "raw": { "language": "json" } } },
+        "url": "{{authUrl}}/login"
+      }
+    },
+    {
+      "name": "12. Admin deletes post",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Admin can delete post', function () { pm.response.to.have.status(200); });"] } }],
+      "request": { "method": "DELETE", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] }, "url": "{{blogUrl}}/api/posts/{{postId}}" }
+    },
+    {
+      "name": "13. Logout reader",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Reader logout succeeds', function () { pm.response.to.have.status(200); });"] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{readerRefreshToken}}\"\n}", "options": { "raw": { "language": "json" } } },
+        "url": "{{authUrl}}/logout"
+      }
+    },
+    {
+      "name": "14. Logout admin",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Admin logout succeeds', function () { pm.response.to.have.status(200); });"] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{adminRefreshToken}}\"\n}", "options": { "raw": { "language": "json" } } },
+        "url": "{{authUrl}}/logout"
+      }
+    },
+    {
+      "name": "15. Refresh author access token",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Refresh token returns an access token', function () { pm.response.to.have.status(200); pm.expect(pm.response.json().accessToken).to.be.a('string'); });"] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}", "options": { "raw": { "language": "json" } } },
+        "url": "{{authUrl}}/refresh"
+      }
+    },
+    {
+      "name": "16. Logout author",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Logout succeeds', function () { pm.response.to.have.status(200); });"] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}", "options": { "raw": { "language": "json" } } },
+        "url": "{{authUrl}}/logout"
+      }
+    },
+    {
+      "name": "17. Revoked refresh token is rejected",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Revoked refresh token is rejected', function () { pm.response.to.have.status(401); });"] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}", "options": { "raw": { "language": "json" } } },
+        "url": "{{authUrl}}/refresh"
+      }
+    }
+  ]
+}

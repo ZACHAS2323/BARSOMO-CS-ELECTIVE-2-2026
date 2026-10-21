@@ -21,6 +21,10 @@ npm run blog
 
 Open `http://localhost:5000` to read posts, create a reader or author account, sign in, and publish as an author. The browser stores the login tokens in localStorage and refreshes expired access tokens automatically.
 
+## Run the API checks in Postman
+
+Import `postman/blog-platform.postman_collection.json` into Postman. Start both servers, select the collection, then choose **Run** to execute its requests in order. It checks registration/login, public and personal post lists, author publishing and editing, reader access denial, admin deletion, refresh, and logout. The collection generates unique test users each run and deletes its test post; the test users remain in the local auth data.
+
 Users and posts are held in in-memory arrays and synchronized to server-side `node-localstorage` files in each service's `data/` folder. This provides the localStorage-style persistence requested by the assignment; browser `localStorage` is not accessible from a Node server. The data folders are git-ignored.
 
 ## Auth endpoints (port 4000)
