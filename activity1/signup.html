@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity 1 | Sign Up</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="card">
+        <h2>Sign Up</h2>
+        <form id="signupForm" novalidate>
+            <div class="form-control">
+                <label for="signupEmail">Email</label>
+                <input type="email" id="signupEmail" placeholder="Enter your email">
+                <span class="error-msg" id="signupEmailError"></span>
+            </div>
+            <div class="form-control">
+                <label for="signupPhone">Phone Number</label>
+                <input type="text" id="signupPhone" placeholder="Enter your phone number">
+                <span class="error-msg" id="signupPhoneError"></span>
+            </div>
+            <div class="form-control">
+                <label for="signupPassword">Password</label>
+                <input type="password" id="signupPassword" placeholder="Minimum 8 characters with a number">
+                <span class="error-msg" id="signupPasswordError"></span>
+            </div>
+            <button type="submit" class="btn">Sign Up</button>
+            <p class="switch-page">Already have an account? <a href="signin.html">Sign In</a></p>
+        </form>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
