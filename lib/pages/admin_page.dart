@@ -8,6 +8,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/models.dart';
 import '../providers/shop_providers.dart';
 
+void _invalidateProductCatalog(WidgetRef ref) {
+  ref.invalidate(productsProvider);
+  ref.invalidate(maximumProductPriceProvider);
+  ref.invalidate(paginatedProductsProvider);
+  ref.read(currentProductPageProvider.notifier).state = 0;
+}
+
 class AdminHome extends ConsumerStatefulWidget {
   const AdminHome({super.key});
 
@@ -77,7 +84,7 @@ class AdminProductsPage extends ConsumerWidget {
       isScrollControlled: true,
       builder: (_) => ProductForm(product: product),
     );
-    ref.invalidate(productsProvider);
+    _invalidateProductCatalog(ref);
   }
 
   @override
@@ -160,7 +167,7 @@ class AdminProductsPage extends ConsumerWidget {
                                 await ref
                                     .read(shopServiceProvider)
                                     .deleteProduct(product.id);
-                                ref.invalidate(productsProvider);
+                                _invalidateProductCatalog(ref);
                               } catch (error) {
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -291,7 +298,7 @@ class _ProductFormState extends ConsumerState<ProductForm> {
             imageExtension: _imageExtension,
             imageContentType: _imageContentType,
           );
-      ref.invalidate(productsProvider);
+      _invalidateProductCatalog(ref);
       if (mounted) Navigator.pop(context);
     } catch (error) {
       if (mounted) {

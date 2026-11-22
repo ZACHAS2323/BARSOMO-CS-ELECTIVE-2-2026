@@ -21,6 +21,7 @@ class _CartPageState extends ConsumerState<CartPage> {
       ref.read(cartProvider.notifier).clear();
       ref.invalidate(customerOrdersProvider);
       ref.invalidate(productsProvider);
+      ref.invalidate(paginatedProductsProvider);
       if (!mounted) return;
       await showDialog<void>(
         context: context,

@@ -30,6 +30,18 @@ class ShopService {
     return rows.map<CategoryModel>(CategoryModel.fromMap).toList();
   }
 
+  Future<double> maximumProductPrice() async {
+    final row = await _client
+        .from('products')
+        .select('price')
+        .order('price', ascending: false)
+        .limit(1)
+        .maybeSingle();
+    if (row == null) return 1;
+    final price = (row['price'] as num).toDouble();
+    return price > 0 ? price : 1;
+  }
+
   Future<List<ProductModel>> products({
     String? categoryId,
     String? query,
@@ -47,6 +59,37 @@ class ShopService {
     }
     final rows = await request.order('name');
     return rows.map<ProductModel>(ProductModel.fromMap).toList();
+  }
+
+  Future<PaginatedProducts> paginatedProducts({
+    String? categoryId,
+    String? query,
+    required double minimumPrice,
+    required double maximumPrice,
+    required int page,
+  }) async {
+    final range = productPageRange(page);
+    var request = _client
+        .from('products')
+        .select(
+          'id,name,description,price,stock,category_id,image_url,categories(name)',
+        );
+    if (categoryId != null) {
+      request = request.eq('category_id', categoryId);
+    }
+    if (query != null && query.trim().isNotEmpty) {
+      request = request.ilike('name', '%${query.trim()}%');
+    }
+    final response = await request
+        .gte('price', minimumPrice)
+        .lte('price', maximumPrice)
+        .order('name')
+        .range(range.start, range.end)
+        .count(CountOption.exact);
+    return PaginatedProducts(
+      items: response.data.map<ProductModel>(ProductModel.fromMap).toList(),
+      totalCount: response.count,
+    );
   }
 
   Future<void> createCategory(String name) async {

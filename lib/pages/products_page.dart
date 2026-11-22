@@ -4,21 +4,34 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/models.dart';
 import '../providers/shop_providers.dart';
 
-class ProductsPage extends ConsumerWidget {
+class ProductsPage extends ConsumerStatefulWidget {
   const ProductsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProductsPage> createState() => _ProductsPageState();
+}
+
+class _ProductsPageState extends ConsumerState<ProductsPage> {
+  RangeValues? _draftPriceRange;
+
+  Future<void> _refresh() async {
+    ref.invalidate(categoriesProvider);
+    ref.invalidate(maximumProductPriceProvider);
+    ref.invalidate(paginatedProductsProvider);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final categories = ref.watch(categoriesProvider);
-    final products = ref.watch(productsProvider);
+    final maximumPrice = ref.watch(maximumProductPriceProvider);
+    final products = ref.watch(paginatedProductsProvider);
     final cart = ref.watch(cartProvider);
     final selectedCategory = ref.watch(categoryFilterProvider);
+    final selectedRange = ref.watch(selectedPriceRangeProvider);
+    final page = ref.watch(currentProductPageProvider);
 
     return RefreshIndicator(
-      onRefresh: () async {
-        ref.invalidate(categoriesProvider);
-        ref.invalidate(productsProvider);
-      },
+      onRefresh: _refresh,
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -28,8 +41,10 @@ class ProductsPage extends ConsumerWidget {
               prefixIcon: Icon(Icons.search),
               border: OutlineInputBorder(),
             ),
-            onChanged: (value) =>
-                ref.read(searchProvider.notifier).state = value,
+            onChanged: (value) {
+              ref.read(currentProductPageProvider.notifier).state = 0;
+              ref.read(searchProvider.notifier).state = value;
+            },
           ),
           const SizedBox(height: 12),
           SizedBox(
@@ -45,9 +60,10 @@ class ProductsPage extends ConsumerWidget {
                     child: FilterChip(
                       label: const Text('All'),
                       selected: selectedCategory == null,
-                      onSelected: (_) =>
-                          ref.read(categoryFilterProvider.notifier).state =
-                              null,
+                      onSelected: (_) {
+                        ref.read(currentProductPageProvider.notifier).state = 0;
+                        ref.read(categoryFilterProvider.notifier).state = null;
+                      },
                     ),
                   ),
                   ...items.map(
@@ -56,9 +72,12 @@ class ProductsPage extends ConsumerWidget {
                       child: FilterChip(
                         label: Text(category.name),
                         selected: selectedCategory == category.id,
-                        onSelected: (_) =>
-                            ref.read(categoryFilterProvider.notifier).state =
-                                category.id,
+                        onSelected: (_) {
+                          ref.read(currentProductPageProvider.notifier).state =
+                              0;
+                          ref.read(categoryFilterProvider.notifier).state =
+                              category.id;
+                        },
                       ),
                     ),
                   ),
@@ -67,37 +86,140 @@ class ProductsPage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 12),
+          maximumPrice.when(
+            loading: () => const LinearProgressIndicator(),
+            error: (error, _) => Text('Price filter unavailable: $error'),
+            data: (rawMaximum) {
+              final sliderMaximum = rawMaximum > 0 ? rawMaximum : 1.0;
+              final committedRange =
+                  selectedRange ?? RangeValues(0, sliderMaximum);
+              final minimum = committedRange.start
+                  .clamp(0.0, sliderMaximum)
+                  .toDouble();
+              final maximum = committedRange.end
+                  .clamp(minimum, sliderMaximum)
+                  .toDouble();
+              final visibleRange =
+                  _draftPriceRange ?? RangeValues(minimum, maximum);
+
+              return Card(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Filter by price',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              ref
+                                      .read(currentProductPageProvider.notifier)
+                                      .state =
+                                  0;
+                              ref
+                                      .read(selectedPriceRangeProvider.notifier)
+                                      .state =
+                                  null;
+                              setState(() => _draftPriceRange = null);
+                            },
+                            child: const Text('Reset'),
+                          ),
+                        ],
+                      ),
+                      RangeSlider(
+                        min: 0,
+                        max: sliderMaximum,
+                        divisions: 20,
+                        labels: RangeLabels(
+                          '₱${visibleRange.start.toStringAsFixed(0)}',
+                          '₱${visibleRange.end.toStringAsFixed(0)}',
+                        ),
+                        values: visibleRange,
+                        onChanged: (value) =>
+                            setState(() => _draftPriceRange = value),
+                        onChangeEnd: (value) {
+                          ref.read(currentProductPageProvider.notifier).state =
+                              0;
+                          ref.read(selectedPriceRangeProvider.notifier).state =
+                              value;
+                          setState(() => _draftPriceRange = null);
+                        },
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('₱${visibleRange.start.toStringAsFixed(2)}'),
+                          Text('₱${visibleRange.end.toStringAsFixed(2)}'),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
           products.when(
             loading: () => const Padding(
               padding: EdgeInsets.only(top: 80),
               child: Center(child: CircularProgressIndicator()),
             ),
             error: (error, _) => Text('Could not load products: $error'),
-            data: (items) {
-              if (items.isEmpty) {
+            data: (result) {
+              if (result.items.isEmpty) {
                 return const Padding(
-                  padding: EdgeInsets.only(top: 80),
+                  padding: EdgeInsets.only(top: 32, bottom: 16),
                   child: Center(child: Text('No products match your filters.')),
                 );
               }
-              return GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisExtent: 280,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                ),
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  final product = items[index];
-                  final inCart = cart.where(
-                    (item) => item.product.id == product.id,
-                  );
-                  final quantity = inCart.isEmpty ? 0 : inCart.first.quantity;
-                  return _ProductCard(product: product, cartQuantity: quantity);
-                },
+              return Column(
+                children: [
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisExtent: 280,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                        ),
+                    itemCount: result.items.length,
+                    itemBuilder: (context, index) {
+                      final product = result.items[index];
+                      final inCart = cart.where(
+                        (item) => item.product.id == product.id,
+                      );
+                      final quantity = inCart.isEmpty
+                          ? 0
+                          : inCart.first.quantity;
+                      return _ProductCard(
+                        product: product,
+                        cartQuantity: quantity,
+                      );
+                    },
+                  ),
+                  _PaginationBar(
+                    page: page,
+                    totalCount: result.totalCount,
+                    onPrevious: page == 0
+                        ? null
+                        : () => ref
+                              .read(currentProductPageProvider.notifier)
+                              .state--,
+                    onNext: (page + 1) * productsPerPage >= result.totalCount
+                        ? null
+                        : () => ref
+                              .read(currentProductPageProvider.notifier)
+                              .state++,
+                  ),
+                ],
               );
             },
           ),
@@ -171,6 +293,48 @@ class _ProductCard extends ConsumerWidget {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PaginationBar extends StatelessWidget {
+  const _PaginationBar({
+    required this.page,
+    required this.totalCount,
+    required this.onPrevious,
+    required this.onNext,
+  });
+
+  final int page;
+  final int totalCount;
+  final VoidCallback? onPrevious;
+  final VoidCallback? onNext;
+
+  @override
+  Widget build(BuildContext context) {
+    final pageCount = (totalCount + productsPerPage - 1) ~/ productsPerPage;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          IconButton(
+            tooltip: 'Previous page',
+            onPressed: onPrevious,
+            icon: const Icon(Icons.chevron_left),
+          ),
+          Text(
+            totalCount == 0
+                ? 'No products'
+                : 'Page ${page + 1} of $pageCount ($totalCount products)',
+          ),
+          IconButton(
+            tooltip: 'Next page',
+            onPressed: onNext,
+            icon: const Icon(Icons.chevron_right),
           ),
         ],
       ),

@@ -44,6 +44,23 @@ class ProductModel {
   }
 }
 
+class PaginatedProducts {
+  final List<ProductModel> items;
+  final int totalCount;
+
+  const PaginatedProducts({required this.items, required this.totalCount});
+}
+
+const int productsPerPage = 6;
+
+({int start, int end}) productPageRange(int page) {
+  if (page < 0) {
+    throw ArgumentError.value(page, 'page', 'Must be zero or greater');
+  }
+  final start = page * productsPerPage;
+  return (start: start, end: start + productsPerPage - 1);
+}
+
 class CartItem {
   final ProductModel product;
   int quantity;

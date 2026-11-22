@@ -8,6 +8,8 @@ and database-enforced access policies.
 
 - Customers can browse and search products, filter by category, manage a cart,
   check out, and review their order history.
+- The shop can filter products by price and loads six matching products per
+  page from Supabase.
 - Admins can manage products and categories and update order statuses.
 - Checkout runs in one PostgreSQL function. It reads current product prices,
   locks and checks stock, decrements inventory, and saves an order and item
