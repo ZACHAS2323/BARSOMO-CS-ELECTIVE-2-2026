@@ -1,0 +1,56 @@
+CREATE DATABASE IF NOT EXISTS blog_platform
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+USE blog_platform;
+
+CREATE TABLE IF NOT EXISTS roles (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  role VARCHAR(255) NOT NULL UNIQUE,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  encoder_id VARCHAR(50) NULL,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB;
+
+INSERT IGNORE INTO roles (role) VALUES ('reader'), ('author'), ('admin');
+
+CREATE TABLE IF NOT EXISTS users (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  username VARCHAR(50) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  role_id INT UNSIGNED NOT NULL,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_users_role_id (role_id),
+  CONSTRAINT fk_users_role FOREIGN KEY (role_id) REFERENCES roles (id)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS refresh_tokens (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id INT UNSIGNED NOT NULL,
+  token_hash CHAR(64) NOT NULL UNIQUE,
+  expires_at DATETIME NOT NULL,
+  revoked_at DATETIME NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_refresh_tokens_user_id (user_id),
+  KEY idx_refresh_tokens_expiry (expires_at),
+  CONSTRAINT fk_refresh_tokens_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS posts (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  author_id INT UNSIGNED NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  content LONGTEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_posts_author_id (author_id),
+  KEY idx_posts_created_at (created_at),
+  CONSTRAINT fk_posts_author FOREIGN KEY (author_id) REFERENCES users (id)
+) ENGINE=InnoDB;

@@ -1,0 +1,28 @@
+{
+  "name": "blog-platform-web-exam",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Role-based blog platform with Express, MariaDB, and React",
+  "scripts": {
+    "auth": "node auth-server/server.js",
+    "blog": "node blog-server/server.js",
+    "frontend": "npm --prefix frontend run dev",
+    "dev": "concurrently \"npm:auth\" \"npm:blog\" \"npm:frontend\"",
+    "build": "npm --prefix frontend run build",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.14.1"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
