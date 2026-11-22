@@ -1,0 +1,19 @@
+{
+  "folders": [
+    {
+      "name": "Blog Platform Web Dev",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/node_modules": true,
+      "**/dist": true
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/dist": true
+    },
+    "editor.formatOnSave": true
+  }
+}
